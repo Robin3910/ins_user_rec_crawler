@@ -1,7 +1,11 @@
 import json
 import logging
+import os
 from random import randint
 from time import time, sleep, localtime
+from urllib.request import urlretrieve
+import openpyxl
+from openpyxl.drawing.image import Image
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -19,16 +23,20 @@ class InstaDM(object):
 
         self.userDataMap = {}
         self.resultData = []
+        self.workbook = openpyxl.Workbook()
+        self.sheet = self.workbook.active
         self.resultData.append(["username", "fans", "desc", "country", "pic"])
-        with open('infos/usernames.txt', 'r') as f:
+        with open('../infos/usernames.txt', 'r') as f:
             self.usernames = [line.strip() for line in f]
-        f = open('infos/config.json', )
+        f = open('../infos/config.json', )
         self.botConfig = json.load(f)
 
         self.selectors = {
             "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down chevron icon']",
             "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options']",
             "accountInfoBtn": "//button[text()='About this account' or text()='帐户简介']",
+            "countryDetail": "//span[text()='Account based in' or text()='帐户所在地']/../../span",
+            "avatarUrl": "//main/div/header//img",
             "nextBtn": "//button[@aria-label='Next' or @aria-label='下一步']",
             "seeAllBtn": "//main/div/div[2]/div/a",
             "recUsersTitle": "//div[@role='presentation']//li/div/div/div/div/div[2]/div[1]/a/div",
@@ -36,6 +44,7 @@ class InstaDM(object):
             "desc": "//main/div/header/section/div[3]",
             "search_input_button": "//input[@placeholder='Search']/..",
             "search_input_area": "//input[@placeholder='Search']",
+            "follow_button": "//div[text()='Follow']",
             "accept_cookies": "//button[text()='Accept']",
             "home_to_login_button": "//button[text()='Log In']",
             "username_field": "username",
@@ -70,11 +79,8 @@ class InstaDM(object):
         try:
             self.driver.get('https://instagram.com/?hl=en')
 
-            # 代码修改处
             cookies = self.extract_cookies(
                 cookie=self.botConfig["cookie"])
-            # cookie="mid=YdkfTgALAAEkbmcPqBufmiKyV3D5; ig_did=734B6C43-E743-461E-AEEF-6A635AD5BAAB; ig_nrcb=1; datr=uDgKY0maEvUCH6O4VjE1-JLp; csrftoken=AChKcT1cFCePhygWaZKlIG10FOfRFd8A; ds_user_id=50932469833; shbid=5886\05450932469833\0541695640111:01f7f0b84f4be8d39b54c3b48f855b552fcfb1a01e7c5fc4f5fbb49973aee454aa69c42a; shbts=1664104111\05450932469833\0541695640111:01f79238102d2d42b24ad4408478876b24154b4988c111dabe8748ceb6bfdc9d63e47bc7; sessionid=50932469833%3AQWOHIbc9E2oCz5%3A6%3AAYcWck8gvNNdWFPkcnG5eQkkTnxxy0D4b98JykF5mg; dpr=1.25; ig_lang=en; rur=NAO\05450932469833\0541695742589:01f72e8b338134d3aed5116c2dd676e012d137b8e71df887f9d20e9ea1684f7b51bdf8a7; mp_7ccb86f5c2939026a4b5de83b5971ed9_mixpanel=%7B%22distinct_id%22%3A%20%221837a74b0975cd-0a23d81b26b53f-26021c51-240000-1837a74b0987e8%22%2C%22%24device_id%22%3A%20%221837a74b0975cd-0a23d81b26b53f-26021c51-240000-1837a74b0987e8%22%2C%22site_type%22%3A%20%22similarweb%20extension%22%2C%22%24initial_referrer%22%3A%20%22https%3A%2F%2Fwww.instagram.com%2Faccounts%2Fedit%2F%22%2C%22%24initial_referring_domain%22%3A%20%22www.instagram.com%22%7D")
-            # 代码结束
 
             year = localtime().tm_year + 1
 
@@ -105,8 +111,12 @@ class InstaDM(object):
                 username = self.usernames.pop()
                 self.searchUser(username)
 
+            self.getUserDetail()
+
+            self.workbook.save('userinfo_' + str(time()) + '.xlsx')
+
         except Exception as e:
-            logging.error(e)
+            self.workbook.save('userinfo_' + str(time()) + '.xlsx')
             print(str(e))
 
     def __get_element__(self, element_tag, locator):
@@ -232,8 +242,6 @@ class InstaDM(object):
                 for i in recUsersTitleList:
                     self.userDataMap[i.text] = 1
 
-                self.__random_sleep__()
-
             print("get recommend info finish|username: " + username)
 
             self.driver.close()
@@ -243,34 +251,65 @@ class InstaDM(object):
             return
 
     def getUserDetail(self):
-
-        for i in self.userDataMap:
-            print("get user detail info|username: " + i)
-            userLink = f'https://www.instagram.com/{i}'
+        for name in self.userDataMap:
+            print("get user detail info start|username: " + name)
+            userLink = f'https://www.instagram.com/{name}'
             # open new tab for fetch info
             newWindow = f'window.open("{userLink}")'
             self.driver.execute_script(newWindow)
             handles = self.driver.window_handles
             self.driver.switch_to.window(handles[len(handles) - 1])
-            self.__random_sleep__()
+            self.__random_sleep__(10, 10)
             try:
                 country = ""
                 pic = ""
+                picPath = f'./imgs/{name}.jpg'
+                if self.__wait_for_element__(self.selectors['fans_num'], "xpath") is not True:
+                    self.driver.close()
+                    self.driver.switch_to.window(handles[0])
+                    continue
+
                 fans = self.driver.find_element_by_xpath(
                     self.selectors['fans_num']).get_attribute("title")
+                if int(fans) < self.botConfig["minFansNum"]:
+                    self.driver.close()
+                    self.driver.switch_to.window(handles[0])
+                    continue
 
                 desc = self.driver.find_element_by_xpath(
                     self.selectors['desc']).get_attribute("textContent")
 
                 self.__find_element_and_click(self.selectors["countryInfoBtn"], "xpath")
-                self.__random_sleep__()
-                self.__find_element_and_click(self.selectors["accountInfoBtn"], "xpath")
+                self.__random_sleep__(1, 1)
+                if self.__wait_for_element__(self.selectors["accountInfoBtn"], "xpath", 1):
+                    self.__find_element_and_click(self.selectors["accountInfoBtn"], "xpath")
+                    country = self.driver.find_element_by_xpath(self.selectors["countryDetail"]).text
 
-                self.resultData.append([i, fans, desc, country, pic])
+                pic = self.driver.find_element_by_xpath(self.selectors["avatarUrl"]).get_attribute("src")
+                if pic is not None:
+                    urlretrieve(pic, picPath)
+
+                self.resultData.append([name, fans, desc, country, pic])
 
                 self.driver.close()
                 self.driver.switch_to.window(handles[0])
 
+                print("get user detail info finished|username: " + name)
+
             except Exception as e:
-                print("get userinfo err|account is private|username: " + i + "|err info:" + str(e))
-                return
+                print("get userinfo err|username: " + name + "|err info:" + str(e))
+                continue
+
+    def __save_excel(self):
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        for i in range(1, len(self.resultData)):
+            row = self.resultData[i]
+            sheet.append(row)
+            img = Image(f'./imgs/{row[4]}.jpg')
+            sheet.column_dimensions['F'].width = img.width
+            sheet.row_dimensions[f'{i}'].height = img.height
+            sheet.add_image(img, f'F{i}')
+
+        workbook.save('userinfo_' + str(time()) + '.xlsx')
+        print("get userinfo task finish, save into excel")
