@@ -1,14 +1,36 @@
 import openpyxl
 from openpyxl.drawing.image import Image
-data = [['username', 'fans', 'desc', 'country', 'pic'], ['jemsplaytime', 10493, 'JeMplaytime-Toys and moreGames/toysWe review toys and more. Helping find the perfect toys, games and fun places is our goal.Acct run by Mum. DM for collab/PR♥️👉 click link for more linktr.ee/jemsplaytime', 'United Kingdom', 'https://scontent-sea1-1.cdninstagram.com/v/t51.2885-19/298522567_398753365696514_7119687668465737133_n.jpg?stp=dst-jpg_s320x320&_nc_ht=scontent-sea1-1.cdninstagram.com&_nc_cat=102&_nc_ohc=644m02eNheIAX-gn7FU&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfBt5kehHnxyCC0tduybbqCV_fbEpHlSLETjTYPtEiCG_A&oe=63C7C194&_nc_sid=8fd12b'], ['karolina_14.08.2015', 835, '🌟🌟🌟K.A.R.O.L.I.N.A🌟🌟🌟Personal blogМОДЕЛЬ  @fashionkids_agency_lida@fashionkids_agency Танцую в @ads_family, @viktoriya_lopes6 лет рост 128 см Ведёт мама @stylist_leon_natalia_ Followed by nellitulko_model and elizavieta_butsko_17.11.2014', '', 'https://scontent-sea1-1.cdninstagram.com/v/t51.2885-19/287667273_3280264805553750_7783827385173171981_n.jpg?stp=dst-jpg_s320x320&_nc_ht=scontent-sea1-1.cdninstagram.com&_nc_cat=106&_nc_ohc=hTWR2PAxMKgAX854UYW&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfADdCSPzYOWCReMevNSaXTZbZdIxftv7WMYO7BQLBWMKg&oe=63C73ACC&_nc_sid=8fd12b'], ['lareeworld', 849, 'Laree🌸Hi! I’m Laree🌸 👨\u200d👩\u200d👧\u200d👦Account led by mom/dad.                                          🎥✨ Subscribe⤵️ ✨🎥.    🇺🇸🇩🇴 www.youtube.com/channel/UCY6kpjy-Rt85cB5JrA1K0Rg', '', 'https://scontent-sea1-1.cdninstagram.com/v/t51.2885-19/275797096_153779130368558_8459047678316022333_n.jpg?stp=dst-jpg_s320x320&_nc_ht=scontent-sea1-1.cdninstagram.com&_nc_cat=102&_nc_ohc=fuA0VFj5xnMAX_BPPjB&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfBbZqR6NGJXIqrATf6ywIC5K4j-55-M8x0rnKMffynRHg&oe=63C7B2FD&_nc_sid=8fd12b'], ['busyhands_busybrain', 839, 'Bruna GalloEducation@busyhands_busybrain Uma educadora pelo mundo.🇧🇷🇮🇹🇦🇺🇺🇸🇳🇿🎓Pedagoga- USP/Brasil📚Mestra em Educação Infantil- USP/Brasil👫Mãe de 2 💕 open.spotify.com/show/2wrG7IQogjK0zpsZoV7v73?si=3tyeux0QRJKBOPZ3y4-KaA', '', 'https://scontent-sea1-1.cdninstagram.com/v/t51.2885-19/162433640_353280019311666_8673376769925367959_n.jpg?stp=dst-jpg_s320x320&_nc_ht=scontent-sea1-1.cdninstagram.com&_nc_cat=106&_nc_ohc=6vc0I73Cqa8AX990a8z&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfD-ZuI0kRdJHyNuLbTY4oZkEtkX4OwYebiwqoZVJaSICw&oe=63C75AC2&_nc_sid=8fd12b'], ['stylist_leon_natalia_', 521, '◾СТИЛИСТ ◾НАТАЛЬЯ ◾БЕЛАРУСЬНаталья Леон🤍 Эстетика. Мода. Стиль .🤍Стиль - это личность 🤍 Концептуальные образы для съёмок Followed by nellitulko_model and elizavieta_butsko_17.11.2014', '', 'https://scontent-sea1-1.cdninstagram.com/v/t51.2885-19/280513918_522499769305686_4710107429843013967_n.jpg?stp=dst-jpg_s320x320&_nc_ht=scontent-sea1-1.cdninstagram.com&_nc_cat=106&_nc_ohc=SN9y3W7ZxukAX-bhT0P&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfAdCHNORcE2763yT3PJBuBmeqnZIgQW_3rp-udCqRn5ag&oe=63C76DA0&_nc_sid=8fd12b'], ['premiumprophouse', 534, 'Premium Prop House• Party Prop Hire \u2063• Adelaide, South Australia\u2063➡️ DM or email enquires to premiumprophouse@gmail.com Followed by connorwillder', '', 'https://scontent-sea1-1.cdninstagram.com/v/t51.2885-19/307891195_1238074023400900_8254781665063332274_n.jpg?stp=dst-jpg_s320x320&_nc_ht=scontent-sea1-1.cdninstagram.com&_nc_cat=104&_nc_ohc=8tQAYQQFDj8AX_s4skn&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfBUcmWbp4uPd7EY-3tQ_KLc0ELfjbDXBo3KYRusi_Jfvw&oe=63C67E9D&_nc_sid=8fd12b'], ['fashionkids_agency_lida', 674, '✨ДЕТСКАЯ МОДЕЛЬНАЯ ШКОЛА ✨Artг. ЛидаМоделинг с 4 летМА @fashionkids_agencyBoss @anastassiakomar Followed by nellitulko_model and elizavieta_butsko_17.11.2014', '', 'https://scontent-sea1-1.cdninstagram.com/v/t51.2885-19/121607186_338589780699448_8546429736553502307_n.jpg?stp=dst-jpg_s320x320&_nc_ht=scontent-sea1-1.cdninstagram.com&_nc_cat=104&_nc_ohc=zAC11jkbjGMAX_7xeob&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfAeFy912gMmFynER4JDYgMSjdTBKPO3bPDcaV5q7c2u7g&oe=63C74209&_nc_sid=8fd12b']]
 
+data = [['username', 'fans', 'desc', 'country'], ['jemsplaytime', 10493,
+                                                  'JeMplaytime-Toys and moreGames/toysWe review toys and more. Helping find the perfect toys, games and fun places is our goal.Acct run by Mum. DM for collab/PR♥️👉 click link for more linktr.ee/jemsplaytime',
+                                                  'United Kingdom'], ['busyhands_busybrain', 840,
+                                                                      'Bruna GalloEducation@busyhands_busybrain Uma educadora pelo mundo.🇧🇷🇮🇹🇦🇺🇺🇸🇳🇿🎓Pedagoga- USP/Brasil📚Mestra em Educação Infantil- USP/Brasil👫Mãe de 2 💕 open.spotify.com/show/2wrG7IQogjK0zpsZoV7v73?si=3tyeux0QRJKBOPZ3y4-KaA',
+                                                                      '']]
 workbook = openpyxl.Workbook()
 sheet = workbook.active
 for i in range(1, len(data)):
     row = data[i]
     sheet.append(row)
     img = Image(f'../imgs/{row[0]}.jpg')
-    sheet.add_image(img, f'F{i}')
+    img.width = 50
+    img.height = 50
+    sheet.add_image(img, f'E{i}')
+
+    # post imgs
+    for j in range(0, 2):
+        postImg = Image(f'../imgs/{row[0]}_{j}.jpg')
+        postImg.width = 50
+        postImg.height = 50
+
+        boxPos = ''
+        if i == 0:
+            boxPos = f'F{i}'
+        if i == 1:
+            boxPos = f'G{i}'
+        if i == 2:
+            boxPos = f'H{i}'
+
+        sheet.add_image(postImg, boxPos)
 
 workbook.save('userinfo.xlsx')
 print("get userinfo task finish, save into excel")

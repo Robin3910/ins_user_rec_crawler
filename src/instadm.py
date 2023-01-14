@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from random import randint
 from time import time, sleep, localtime
 from urllib.request import urlretrieve
@@ -14,6 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager as CM
 import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 DEFAULT_IMPLICIT_WAIT = 1
@@ -25,13 +25,14 @@ class InstaDM(object):
 
         self.userDataMap = {}
         self.resultData = []
-        self.resultData.append(["username", "fans", "desc", "country", "pic"])
+        self.resultData.append(["username", "fans", "desc", "country"])
         with open('./infos/usernames.txt', 'r') as f:
             self.usernames = [line.strip() for line in f]
         f = open('./infos/config.json', )
         self.botConfig = json.load(f)
 
         self.selectors = {
+            "postImgs": "//article/div[1]/div/div[1]//img",
             "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down chevron icon']",
             "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options']",
             "accountInfoBtn": "//button[text()='About this account' or text()='帐户简介']",
@@ -250,10 +251,12 @@ class InstaDM(object):
             return
 
     def getUserDetail(self):
+        count = 0
         for name in self.userDataMap:
             if name is None:
                 continue
             print("get user detail info start|username: " + name)
+            count += 1
             userLink = f'https://www.instagram.com/{name}'
             # open new tab for fetch info
             newWindow = f'window.open("{userLink}")'
@@ -294,12 +297,17 @@ class InstaDM(object):
                 if pic is not None:
                     urlretrieve(pic, picPath)
 
-                self.resultData.append([name, fans, desc, country, pic])
+                # postImgs = self.driver.find_elements_by_xpath(self.selectors["postImgs"])
+                # if len(postImgs) > 0:
+                #     for i in range(0, len(postImgs)):
+                #         urlretrieve(postImgs[i].get_attribute("src"), f'./imgs/{name}_{i}.jpg')
+
+                self.resultData.append([name, fans, desc, country])
 
                 self.driver.close()
                 self.driver.switch_to.window(handles[0])
 
-                print("get user detail info finished|username: " + name)
+                print(f'get user detail info finished, process: {int(count / len(self.userDataMap))}|username: {name}')
 
             except Exception as e:
                 logging.error("get userinfo err|username: " + name + "|err info:" + str(e))
@@ -310,9 +318,20 @@ class InstaDM(object):
         sheet = workbook.active
         for i in range(1, len(self.resultData)):
             row = self.resultData[i]
+            # detail info
             sheet.append(row)
+
+            # avatar
             img = Image(f'./imgs/{row[0]}.jpg')
-            sheet.add_image(img, f'F{i}')
+            sheet.add_image(img, f'E{i}')
+
+            # # post imgs
+            # postImg1 = Image(f'./imgs/{row[0]}_{0}.jpg')
+            # postImg2 = Image(f'./imgs/{row[0]}_{1}.jpg')
+            # postImg3 = Image(f'./imgs/{row[0]}_{2}.jpg')
+            # sheet.add_image(postImg1, f'F{i}')
+            # sheet.add_image(postImg2, f'G{i}')
+            # sheet.add_image(postImg3, f'H{i}')
 
         workbook.save('userinfo_' + str(time()) + '.xlsx')
         print("get userinfo task finish, save into excel")
