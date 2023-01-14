@@ -307,7 +307,7 @@ class InstaDM(object):
                 self.driver.close()
                 self.driver.switch_to.window(handles[0])
 
-                print(f'get user detail info finished, process: {int(count / len(self.userDataMap))}|username: {name}')
+                print(f'get user detail info finished, process: {count / len(self.userDataMap)}|username: {name}')
 
             except Exception as e:
                 logging.error("get userinfo err|username: " + name + "|err info:" + str(e))
