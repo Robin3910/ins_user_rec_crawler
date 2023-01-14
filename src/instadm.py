@@ -13,6 +13,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager as CM
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 DEFAULT_IMPLICIT_WAIT = 1
 
@@ -23,12 +25,10 @@ class InstaDM(object):
 
         self.userDataMap = {}
         self.resultData = []
-        self.workbook = openpyxl.Workbook()
-        self.sheet = self.workbook.active
         self.resultData.append(["username", "fans", "desc", "country", "pic"])
-        with open('../infos/usernames.txt', 'r') as f:
+        with open('./infos/usernames.txt', 'r') as f:
             self.usernames = [line.strip() for line in f]
-        f = open('../infos/config.json', )
+        f = open('./infos/config.json', )
         self.botConfig = json.load(f)
 
         self.selectors = {
@@ -37,7 +37,7 @@ class InstaDM(object):
             "accountInfoBtn": "//button[text()='About this account' or text()='帐户简介']",
             "countryDetail": "//span[text()='Account based in' or text()='帐户所在地']/../../span",
             "avatarUrl": "//main/div/header//img",
-            "nextBtn": "//button[@aria-label='Next' or @aria-label='下一步']",
+            "nextBtn": "//button[@aria-label='Next' or @aria-label='下一步'][last()]",
             "seeAllBtn": "//main/div/div[2]/div/a",
             "recUsersTitle": "//div[@role='presentation']//li/div/div/div/div/div[2]/div[1]/a/div",
             "fans_num": "//main/div/header/section/ul/li[2]/a/div/span",
@@ -112,12 +112,11 @@ class InstaDM(object):
                 self.searchUser(username)
 
             self.getUserDetail()
-
-            self.workbook.save('userinfo_' + str(time()) + '.xlsx')
+            self.__save_excel()
 
         except Exception as e:
-            self.workbook.save('userinfo_' + str(time()) + '.xlsx')
-            print(str(e))
+            self.__save_excel()
+            logging.error(str(e))
 
     def __get_element__(self, element_tag, locator):
         """Wait for element and then return when it is available"""
@@ -170,12 +169,11 @@ class InstaDM(object):
                 else:
                     logging.info(f"Error: Incorrect locator = {locator}")
             except Exception as e:
-                logging.error(e)
-                print(f"Exception when __wait_for_element__ : {e}")
+                logging.error(f"Exception when __wait_for_element__ : {e}")
 
             sleep(1 - (time() - initTime))
         else:
-            print(
+            logging.error(
                 f"Timed out. Element not found with {locator} : {element_tag}")
         self.driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
         return result
@@ -195,7 +193,6 @@ class InstaDM(object):
 
         except Exception as e:
             logging.error(e)
-            print(f'Exception when __typeSlow__ : {e}')
 
     def __random_sleep__(self, minimum=2, maximum=7):
         t = randint(minimum, maximum)
@@ -235,7 +232,9 @@ class InstaDM(object):
             self.__random_sleep__()
 
             while self.__wait_for_element__(self.selectors["nextBtn"], "xpath", 5):
-                self.__find_element_and_click(self.selectors["nextBtn"], "xpath")
+                nextBtns = self.driver.find_elements_by_xpath(self.selectors["nextBtn"])
+                nextBtns[len(nextBtns) - 1].click()
+                # self.__find_element_and_click(self.selectors["nextBtn"], "xpath")
 
                 recUsersTitleList = self.driver.find_elements_by_xpath(self.selectors["recUsersTitle"])
 
@@ -247,11 +246,13 @@ class InstaDM(object):
             self.driver.close()
             self.driver.switch_to.window(handles[0])
         except Exception as e:
-            print("get userinfo err|account is private|username: " + username + "|err info:" + str(e))
+            logging.error("get userinfo err|account is private|username: " + username + "|err info:" + str(e))
             return
 
     def getUserDetail(self):
         for name in self.userDataMap:
+            if name is None:
+                continue
             print("get user detail info start|username: " + name)
             userLink = f'https://www.instagram.com/{name}'
             # open new tab for fetch info
@@ -264,14 +265,18 @@ class InstaDM(object):
                 country = ""
                 pic = ""
                 picPath = f'./imgs/{name}.jpg'
+                fans = -1
                 if self.__wait_for_element__(self.selectors['fans_num'], "xpath") is not True:
                     self.driver.close()
                     self.driver.switch_to.window(handles[0])
                     continue
 
-                fans = self.driver.find_element_by_xpath(
+                fansStr = self.driver.find_element_by_xpath(
                     self.selectors['fans_num']).get_attribute("title")
-                if int(fans) < self.botConfig["minFansNum"]:
+                if fansStr is not None:
+                    fans = int(fansStr.replace(",", ""))
+                if fans < self.botConfig["minFansNum"]:
+                    print(f'get user detail info finished|username: {name}|fans num is not match')
                     self.driver.close()
                     self.driver.switch_to.window(handles[0])
                     continue
@@ -281,7 +286,7 @@ class InstaDM(object):
 
                 self.__find_element_and_click(self.selectors["countryInfoBtn"], "xpath")
                 self.__random_sleep__(1, 1)
-                if self.__wait_for_element__(self.selectors["accountInfoBtn"], "xpath", 1):
+                if self.__wait_for_element__(self.selectors["accountInfoBtn"], "xpath", 2):
                     self.__find_element_and_click(self.selectors["accountInfoBtn"], "xpath")
                     country = self.driver.find_element_by_xpath(self.selectors["countryDetail"]).text
 
@@ -297,7 +302,7 @@ class InstaDM(object):
                 print("get user detail info finished|username: " + name)
 
             except Exception as e:
-                print("get userinfo err|username: " + name + "|err info:" + str(e))
+                logging.error("get userinfo err|username: " + name + "|err info:" + str(e))
                 continue
 
     def __save_excel(self):
@@ -306,9 +311,7 @@ class InstaDM(object):
         for i in range(1, len(self.resultData)):
             row = self.resultData[i]
             sheet.append(row)
-            img = Image(f'./imgs/{row[4]}.jpg')
-            sheet.column_dimensions['F'].width = img.width
-            sheet.row_dimensions[f'{i}'].height = img.height
+            img = Image(f'./imgs/{row[0]}.jpg')
             sheet.add_image(img, f'F{i}')
 
         workbook.save('userinfo_' + str(time()) + '.xlsx')
