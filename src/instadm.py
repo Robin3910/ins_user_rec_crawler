@@ -326,13 +326,5 @@ class InstaDM(object):
             img = Image(f'./imgs/{row[0]}.jpg')
             sheet.add_image(img, f'E{i}')
 
-            # # post imgs
-            # postImg1 = Image(f'./imgs/{row[0]}_{0}.jpg')
-            # postImg2 = Image(f'./imgs/{row[0]}_{1}.jpg')
-            # postImg3 = Image(f'./imgs/{row[0]}_{2}.jpg')
-            # sheet.add_image(postImg1, f'F{i}')
-            # sheet.add_image(postImg2, f'G{i}')
-            # sheet.add_image(postImg3, f'H{i}')
-
         workbook.save('userinfo_' + str(time()) + '.xlsx')
         print("get userinfo task finish, save into excel")
