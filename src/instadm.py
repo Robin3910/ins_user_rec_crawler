@@ -13,6 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager as CM
 import ssl
+import requests
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -26,12 +27,28 @@ class InstaDM(object):
         self.userDataMap = {}
         self.resultData = []
         self.resultData.append(["username", "fans", "desc", "country"])
-        with open('./infos/usernames.txt', 'r') as f:
-            self.usernames = [line.strip() for line in f]
+        # with open('./infos/usernames.txt', 'r') as f:
+        #     self.usernames = [line.strip() for line in f]
+        #
+        # f.close()
+
         f = open('./infos/config.json', )
         self.botConfig = json.load(f)
+        f.close()
+
+        f = open('./infos/ins-kol.json', )
+        self.kolList = json.load(f)
+
+        self.kolIndex = 0
+        try:
+            with open('./infos/kolIndex.log', 'r') as f:
+                self.kolIndex = int(f.readline())
+        except Exception as e:
+            logging.error(e)
+        f.close()
 
         self.selectors = {
+            "wrongPage": "//*[text()='Something went wrong']",
             "postImgs": "//article/div[1]/div/div[1]//img",
             "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down chevron icon']",
             "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options']",
@@ -106,17 +123,14 @@ class InstaDM(object):
                     self.selectors['button_not_now'], "xpath").click()
                 self.__random_sleep__()
             while True:
-                if not self.usernames:
-                    break
-
-                username = self.usernames.pop()
-                self.searchUser(username)
-
-            self.getUserDetail()
-            self.__save_excel()
+                self.searchUser(self.kolList[self.kolIndex])
+                self.getUserDetail()
+                self.userDataMap = {}
+                self.kolIndex += 1
 
         except Exception as e:
             self.__save_excel()
+            self.__clear_data()
             logging.error(str(e))
 
     def __get_element__(self, element_tag, locator):
@@ -247,7 +261,9 @@ class InstaDM(object):
             self.driver.close()
             self.driver.switch_to.window(handles[0])
         except Exception as e:
-            logging.error("get userinfo err|account is private|username: " + username + "|err info:" + str(e))
+            self.driver.close()
+            self.driver.switch_to.window(handles[0])
+            logging.error("get recommend err|account is private|username: " + username + "|err info:" + str(e))
             return
 
     def getUserDetail(self):
@@ -270,6 +286,11 @@ class InstaDM(object):
                 picPath = f'./imgs/{name}.jpg'
                 fans = -1
                 if self.__wait_for_element__(self.selectors['fans_num'], "xpath") is not True:
+                    if self.__is_wrong_page():
+                        self.__save_excel()
+                        self.__clear_data()
+                        sleep(int(self.botConfig["waitingTime"]))
+
                     self.driver.close()
                     self.driver.switch_to.window(handles[0])
                     continue
@@ -328,3 +349,14 @@ class InstaDM(object):
 
         workbook.save('userinfo_' + str(time()) + '.xlsx')
         print("get userinfo task finish, save into excel")
+
+    def __is_wrong_page(self):
+        if self.__wait_for_element__(self.selectors['wrongPage'], "xpath", 10):
+            requests.get(url=f'https://sctapi.ftqq.com/SCT143186TIvKuCgmwWnzzzGQ6mE5qmyFU.send?title=banned')
+            return True
+        return False
+
+    def __clear_data(self):
+        with open('./infos/kolIndex.log', 'w') as f:
+            f.write(str(self.kolIndex))
+        self.resultData = []
