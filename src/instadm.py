@@ -33,8 +33,8 @@ class InstaDM(object):
 
         self.selectors = {
             "postImgs": "//article/div[1]/div/div[1]//img",
-            "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down chevron icon']",
-            "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options']",
+            "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down Chevron Icon' or @aria-label='“向下箭头”图标']",
+            "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options' or @aria-label='选项']",
             "accountInfoBtn": "//button[text()='About this account' or text()='帐户简介']",
             "countryDetail": "//span[text()='Account based in' or text()='帐户所在地']/../../span",
             "avatarUrl": "//main/div/header//img",
@@ -277,7 +277,12 @@ class InstaDM(object):
                 fansStr = self.driver.find_element_by_xpath(
                     self.selectors['fans_num']).get_attribute("title")
                 if fansStr is not None:
-                    fans = int(fansStr.replace(",", ""))
+                    fansStr = fansStr.replace(",", "")
+                    if fansStr.isdigit():
+                        fans = int(fansStr)
+                    else:
+                        fans = self.str2value(fansStr)
+
                 if fans < self.botConfig["minFansNum"]:
                     print(f'get user detail info finished|username: {name}|fans num is not match')
                     self.driver.close()
@@ -328,3 +333,16 @@ class InstaDM(object):
 
         workbook.save('userinfo_' + str(time()) + '.xlsx')
         print("get userinfo task finish, save into excel")
+
+    def str2value(self, valueStr):
+        valueStr = str(valueStr)
+        idxOfYi = valueStr.find('亿')
+        idxOfWan = valueStr.find('万')
+        if idxOfYi != -1 and idxOfWan != -1:
+            return int(float(valueStr[:idxOfYi])*1e8 + float(valueStr[idxOfYi+1:idxOfWan])*1e4)
+        elif idxOfYi != -1 and idxOfWan == -1:
+            return int(float(valueStr[:idxOfYi])*1e8)
+        elif idxOfYi == -1 and idxOfWan != -1:
+            return int(float(valueStr[idxOfYi+1:idxOfWan])*1e4)
+        elif idxOfYi == -1 and idxOfWan == -1:
+            return float(valueStr)
