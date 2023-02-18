@@ -1,4 +1,6 @@
 {
   "cookie": "",
-  "minFansNum": 500
+  "minFansNum": 500,
+  "waitingTime": 3600,
+  "loopCount": 5
 }

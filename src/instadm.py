@@ -26,17 +26,14 @@ class InstaDM(object):
 
         self.userDataMap = {}
         self.resultData = []
+        self.loopCount = 0
         self.resultData.append(["username", "fans", "desc", "country"])
-        # with open('./infos/usernames.txt', 'r') as f:
-        #     self.usernames = [line.strip() for line in f]
-        #
-        # f.close()
 
         f = open('./infos/config.json', )
         self.botConfig = json.load(f)
         f.close()
 
-        f = open('./infos/ins-kol.json', )
+        f = open('./infos/ins-kol.json', 'r', encoding='utf-8')
         self.kolList = json.load(f)
 
         self.kolIndex = 0
@@ -50,8 +47,8 @@ class InstaDM(object):
         self.selectors = {
             "wrongPage": "//*[text()='Something went wrong']",
             "postImgs": "//article/div[1]/div/div[1]//img",
-            "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down chevron icon']",
-            "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options']",
+            "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down chevron icon' or @aria-label='Down Chevron Icon' or @aria-label='“向下箭头”图标']",
+            "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options' or @aria-label='选项']",
             "accountInfoBtn": "//button[text()='About this account' or text()='帐户简介']",
             "countryDetail": "//span[text()='Account based in' or text()='帐户所在地']/../../span",
             "avatarUrl": "//main/div/header//img",
@@ -124,9 +121,15 @@ class InstaDM(object):
                 self.__random_sleep__()
             while True:
                 self.searchUser(self.kolList[self.kolIndex])
+                self.loopCount += 1
                 self.getUserDetail()
                 self.userDataMap = {}
                 self.kolIndex += 1
+                if self.loopCount == self.botConfig["loopCount"]:
+                    self.loopCount = 0
+                    self.__save_excel()
+                    self.__clear_data()
+                    sleep(self.botConfig["waitingTime"])
 
         except Exception as e:
             self.__save_excel()
@@ -269,7 +272,7 @@ class InstaDM(object):
     def getUserDetail(self):
         count = 0
         for name in self.userDataMap:
-            if name is None:
+            if len(name) == 0:
                 continue
             print("get user detail info start|username: " + name)
             count += 1
