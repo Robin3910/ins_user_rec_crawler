@@ -45,7 +45,7 @@ class InstaDM(object):
         f.close()
 
         self.selectors = {
-            "wrongPage": "//*[text()='Something went wrong']",
+            "wrongPage": "//*[text()='Something went wrong' or text()='出现问题，页面无法加载。']",
             "postImgs": "//article/div[1]/div/div[1]//img",
             "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down chevron icon' or @aria-label='Down Chevron Icon' or @aria-label='“向下箭头”图标']",
             "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options' or @aria-label='选项']",
