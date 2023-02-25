@@ -5,6 +5,7 @@ from time import time, sleep, localtime
 from urllib.request import urlretrieve
 import openpyxl
 from openpyxl.drawing.image import Image
+import socket
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -24,6 +25,8 @@ class InstaDM(object):
 
     def __init__(self, username, password, headless=True, instapy_workspace=None, profileDir=None):
 
+        self.ip = self.get_host_ip()
+        print('current host: ' + self.ip)
         self.userDataMap = {}
         self.resultData = []
         self.loopCount = 0
@@ -134,6 +137,7 @@ class InstaDM(object):
         except Exception as e:
             self.__save_excel()
             self.__clear_data()
+            requests.get(url=f'https://sctapi.ftqq.com/SCT143186TIvKuCgmwWnzzzGQ6mE5qmyFU.send?title=terminated|host:' + self.ip)
             logging.error(str(e))
 
     def __get_element__(self, element_tag, locator):
@@ -374,10 +378,20 @@ class InstaDM(object):
         idxOfYi = valueStr.find('亿')
         idxOfWan = valueStr.find('万')
         if idxOfYi != -1 and idxOfWan != -1:
-            return int(float(valueStr[:idxOfYi])*1e8 + float(valueStr[idxOfYi+1:idxOfWan])*1e4)
+            return int(float(valueStr[:idxOfYi]) * 1e8 + float(valueStr[idxOfYi + 1:idxOfWan]) * 1e4)
         elif idxOfYi != -1 and idxOfWan == -1:
-            return int(float(valueStr[:idxOfYi])*1e8)
+            return int(float(valueStr[:idxOfYi]) * 1e8)
         elif idxOfYi == -1 and idxOfWan != -1:
-            return int(float(valueStr[idxOfYi+1:idxOfWan])*1e4)
+            return int(float(valueStr[idxOfYi + 1:idxOfWan]) * 1e4)
         elif idxOfYi == -1 and idxOfWan == -1:
             return float(valueStr)
+
+    def get_host_ip(self):
+        ip = ""
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8', 80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+            return ip

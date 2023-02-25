@@ -1,17 +1,15 @@
-def str2value(valueStr):
-    valueStr = str(valueStr)
-    idxOfYi = valueStr.find('亿')
-    idxOfWan = valueStr.find('万')
-    if idxOfYi != -1 and idxOfWan != -1:
-        return int(float(valueStr[:idxOfYi])*1e8 + float(valueStr[idxOfYi+1:idxOfWan])*1e4)
-    elif idxOfYi != -1 and idxOfWan == -1:
-        return int(float(valueStr[:idxOfYi])*1e8)
-    elif idxOfYi == -1 and idxOfWan != -1:
-        return int(float(valueStr[idxOfYi+1:idxOfWan])*1e4)
-    elif idxOfYi == -1 and idxOfWan == -1:
-        return float(valueStr)
+import socket
+
+
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+        return ip
 
 
 
-
-print(str2value("1321万"))
+print(get_host_ip())
