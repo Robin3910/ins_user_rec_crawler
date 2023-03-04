@@ -226,7 +226,7 @@ class InstaDM(object):
         self.driver.execute_script(newWindow)
         handles = self.driver.window_handles
         self.driver.switch_to.window(handles[len(handles) - 1])
-        self.__random_sleep__()
+        self.__random_sleep__(10, 20)
 
         try:
             self.__find_element_and_click(self.selectors["suggestedCollapseBtn"], "xpath")
