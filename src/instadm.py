@@ -36,7 +36,7 @@ class InstaDM(object):
             "suggestedCollapseBtn": "//*[local-name() = 'svg' and @aria-label='Down Chevron Icon' or @aria-label='“向下箭头”图标']",
             "countryInfoBtn": "//*[local-name() = 'svg' and @aria-label='Options' or @aria-label='选项']",
             "accountInfoBtn": "//button[text()='About this account' or text()='帐户简介']",
-            "countryDetail": "//span[text()='Account based in' or text()='帐户所在地']/../../span",
+            "countryDetail": "//span[text()='Account based in' or text()='帐户所在地']/../div",
             "avatarUrl": "//main/div/header//img",
             "nextBtn": "//button[@aria-label='Next' or @aria-label='下一步'][last()]",
             "seeAllBtn": "//main/div/div[2]/div/a",
